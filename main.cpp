@@ -1,6 +1,8 @@
 #include <iostream>
 #include <vector>
 #include <stdexcept>
+#include <cstdlib>
+
 using namespace std;
 
 class Tensor {
@@ -8,7 +10,10 @@ public:
     double* data;
     vector<size_t> shape;
 
-    // 1. Constructor Principal
+    // 1. Constructor Vacío
+    Tensor() : data(nullptr), shape({}) {}
+
+    // 2. Constructor Principal
     Tensor(const vector<size_t>& shape, const vector<double>& values) {
         this->shape = shape;
         size_t total_size = 1;
@@ -26,68 +31,109 @@ public:
         }
     }
 
-    // 2. Destructor (DENTRO de la clase)
+    // 3. Constructor de Copia
+    Tensor(const Tensor& other) {
+        this->shape = other.shape;
+        if (other.data != nullptr) {
+            size_t total = 1;
+            for (size_t dim : shape) total *= dim;
+
+            this->data = new double[total];
+            for (size_t i = 0; i < total; ++i) {
+                this->data[i] = other.data[i];
+            }
+        } else {
+            this->data = nullptr;
+        }
+        cout << "Clase Tensor: Constructor Copia -> " << this << endl;
+    }
+
+    // 4. Constructor de Movimiento
+    Tensor(Tensor&& other) noexcept {
+        this->data = other.data;
+        this->shape = move(other.shape);
+        other.data = nullptr;
+        other.shape.clear();
+
+        cout << "Clase Tensor: Constructor Movimiento -> " << this << endl;
+    }
+
+    // 5. Asignador de Copia
+    Tensor& operator=(const Tensor& other) {
+        if (this != &other) {
+            delete[] this->data;
+
+            this->shape = other.shape;
+            if (other.data != nullptr) {
+                size_t total = 1;
+                for (size_t dim : shape) total *= dim;
+                this->data = new double[total];
+                for (size_t i = 0; i < total; ++i) {
+                    this->data[i] = other.data[i];
+                }
+            } else {
+                this->data = nullptr;
+            }
+        }
+        return *this;
+    }
+
+    // 6. Asignador de Movimiento
+    Tensor& operator=(Tensor&& other) noexcept {
+        if (this != &other) {
+            delete[] this->data;
+
+            this->data = other.data;
+            this->shape = move(other.shape);
+
+            other.data = nullptr;
+            other.shape.clear();
+        }
+        return *this;
+    }
+
+    // 7. Destructor (Sección 4)
     ~Tensor() {
         delete[] data;
     }
 
-    // 3. Método ESTÁTICO (Recibe el shape, ej: {2, 3})
+    //  Métodos Estáticos
     static Tensor zeros(const vector<size_t>& shape) {
         size_t total_size = 1;
-        for (size_t dim : shape) {
-            total_size *= dim;
-        }
-
-        // Crea el vector relleno de ceros
+        for (size_t dim : shape) total_size *= dim;
         vector<double> ceros(total_size, 0.0);
-
-        // Llama al constructor principal usando (shape, ceros)
         return Tensor(shape, ceros);
     }
 
     static Tensor ones(const vector<size_t>& shape) {
         size_t total_size = 1;
-        for (size_t dim : shape) {
-            total_size *= dim;
-        }
-
-        // Crea el vector relleno de ceros
-        vector<double> ones(total_size, 1.0);
-
-        // Llama al constructor principal usando (shape, ceros)
-        return Tensor(shape, ones);
+        for (size_t dim : shape) total_size *= dim;
+        vector<double> ones_vec(total_size, 1.0);
+        return Tensor(shape, ones_vec);
     }
 
     static Tensor random(const vector<size_t>& shape, double min = 0.0, double max = 1.0) {
         size_t total_size = 1;
-        for (size_t dim : shape) {
-            total_size *= dim;
-        }
+        for (size_t dim : shape) total_size *= dim;
 
         vector<double> vals(total_size);
         for (size_t i = 0; i < total_size; ++i) {
-            // Genera un número decimal uniforme entre min y max
             double r = (double)rand() / RAND_MAX;
             vals[i] = min + r * (max - min);
         }
-
         return Tensor(shape, vals);
     }
 
     static Tensor arange(double start, double end, double step = 1.0) {
         vector<double> vals;
-
-        // Genera la secuencia desde 'start' hasta antes de 'end'
         for (double v = start; v < end; v += step) {
             vals.push_back(v);
         }
-
-        // La dimensión de un tensor 1D es { cantidad_de_elementos }
-        vector<size_t> shape = { vals.size() }; 
-
+        vector<size_t> shape = { vals.size() };
         return Tensor(shape, vals);
     }
 
+    // Auxiliar de Indexación
     size_t get_index(size_t i, size_t j = 0, size_t k = 0) const {
         if (shape.size() == 1) return i;
         if (shape.size() == 2) return i * shape[1] + j;
@@ -96,9 +142,12 @@ public:
 };
 
 int main() {
-    // Uso correcto del método estático para fabricar un Tensor de 2x3 lleno de 0.0:
-    Tensor T = Tensor::zeros({2, 3});
+    Tensor A;
+    Tensor B = Tensor::zeros({2, 3});
 
-    cout << "Index (0,1): " << T.get_index(0, 1) << endl;
+    A = B; // Asignación copia
+    Tensor C = std::move(B); // Movimiento
+
+    cout << "Valor en index (0,1) de C: " << C.data[C.get_index(0, 1)] << endl;
     return 0;
-};
+}
