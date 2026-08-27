@@ -116,7 +116,9 @@ public:
 
     // Destructor (DENTRO de la clase, Seccion 4)
     ~Tensor() {
-        delete[] data;
+        if (owns_data) {
+            delete[] data;
+        }
     }
 
     size_t size() const {
