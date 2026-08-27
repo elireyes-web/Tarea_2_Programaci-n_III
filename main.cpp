@@ -14,7 +14,7 @@ public:
     bool owns_data;
 
     //Constructor por Defecto
-    Tensor() : data(nullptr), shape({}) {}
+    Tensor() : data(nullptr), shape({}), owns_data(false) {}
 
     // 1. Constructor Principal
     Tensor(const vector<size_t>& shape, const vector<double>& values) {
@@ -56,6 +56,7 @@ public:
     // Constructor de copia: hace deep copy para evitar compartir memoria accidentalmente.
     Tensor(const Tensor& other) {
         this->shape = other.shape;
+        this->owns_data = true;
         if (other.data != nullptr) {
             size_t total = 1;
             for (size_t dim : shape) total *= dim;
@@ -74,8 +75,11 @@ public:
     Tensor(Tensor&& other) noexcept {
         this->data = other.data;
         this->shape = move(other.shape);
+        this->owns_data = other.owns_data;
+
         other.data = nullptr;
         other.shape.clear();
+        other.owns_data = false;
 
         cout << "Clase Tensor: Constructor Movimiento -> " << this << endl;
     }
@@ -83,9 +87,12 @@ public:
     // Asignador de copia.
     Tensor& operator=(const Tensor& other) {
         if (this != &other) {
-            delete[] this->data;
+            if (owns_data) {
+                delete[] this->data;
+            }
 
             this->shape = other.shape;
+            this->owns_data = true;
             if (other.data != nullptr) {
                 size_t total = 1;
                 for (size_t dim : shape) total *= dim;
@@ -103,13 +110,17 @@ public:
     // Asignador de movimiento.
     Tensor& operator=(Tensor&& other) noexcept {
         if (this != &other) {
-            delete[] this->data;
+            if (owns_data) {
+                delete[] this->data;
+            }
 
             this->data = other.data;
             this->shape = move(other.shape);
+            this->owns_data = other.owns_data;
 
             other.data = nullptr;
             other.shape.clear();
+            other.owns_data = false;
         }
         return *this;
     }
