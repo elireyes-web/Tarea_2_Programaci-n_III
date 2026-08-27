@@ -219,6 +219,16 @@ public:
         return Tensor(shape, result);
     }
 
+    Tensor operator*(double scalar) const {
+        vector<double> result(size());
+
+        for (size_t i = 0; i < size(); ++i) {
+            result[i] = data[i] * scalar;
+        }
+
+        return Tensor(shape, result);
+    }
+
     Tensor operator/(const Tensor& other) const {
         validate_same_shape(other);
 
@@ -407,6 +417,8 @@ int main() {
     Tensor E = A * C;
     Tensor F = C / A;
 
+    Tensor M = A * 2.0;
+
     Tensor G = Tensor::arange(0, 12);
     Tensor H = G.view({3, 4});
     Tensor I = G.unsqueeze(0);
@@ -420,6 +432,7 @@ int main() {
     D.print_size("A - B");
     E.print_size("A * C");
     F.print_size("C / A");
+    M.print_size("A * 2.0");
     H.print_size("view");
     I.print_size("unsqueeze");
     J.print_size("concat");
