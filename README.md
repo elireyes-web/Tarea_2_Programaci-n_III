@@ -2,11 +2,6 @@
 
 Implementación de una biblioteca de tensores en C++ (hasta 3 dimensiones), inspirada en NumPy/PyTorch, desarrollada para el curso CS2013 - Programación III.
 
-## Integrantes
-
-- [Nombre 1]
-- [Nombre 2]
-
 ## Compilación
 
 Con CMake:
